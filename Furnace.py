@@ -1,8 +1,13 @@
-def splitsource(sourcestring): #Function splitsource detects if the unit is in fractional form
-    if '/' in sourcestring: #If the division symbol is present in the string, indicating a numerator and denominator
-        sourcestringsplit = sourcestring.split('/') #Split the string in half along the '/'
-    elif 'per' in sourcestring.lower(): #Otherwise, if there is a 'per' present in the strong (1 meter per second)
-        sourcestringsplit = sourcestring.split('per') #Split the string in half along the 'per'
+def splitsource(sourcestring): #Function splitsource detects if the unit is in
+                               #fractional form
+    if '/' in sourcestring: #If the division symbol is present in the string,
+                            #indicating a numerator and denominator
+        sourcestringsplit = sourcestring.split('/') #Split the string in half
+                                                    #along the '/'
+    elif 'per' in sourcestring.lower(): #Otherwise, if there is a 'per' present
+                                        #in the strong (1 meter per second)
+        sourcestringsplit = sourcestring.split('per') #Split the string in half
+                                                      #along the 'per'
     else: #Otherwise, pass.
         sourcestringsplit = sourcestring
     return sourcestringsplit #Return sourcestringsplit as a list
@@ -53,7 +58,8 @@ def dictimport(filename):
     
 def updateparsedunit(parsedunit,key,value,currenttype):
     import collections
-    parsedsubstring = collections.namedtuple('parsedsubstring',['subin','subout','subtype'])
+    parsedsubstring = collections.namedtuple('parsedsubstring',
+                                             ['subin','subout','subtype'])
     parsedtuple = parsedsubstring(subin=key,subout=value,subtype=currenttype)
     parsedunit.append(parsedtuple)
     return parsedunit
@@ -78,20 +84,24 @@ def init():
         left = sourcestringsplit[0]
         right = sourcestringsplit[1]
     else:
-        parsedunit = stringparse(parsedunit, sourcestring, doublelist, prefixdict, prefixlist, unitdict, unitlist)
+        parsedunit = stringparse(parsedunit, sourcestring, doublelist,
+                                 prefixdict, prefixlist, unitdict, unitlist)
 
-def stringparse(parsedunit, sourcestring, doublelist, prefixdict, prefixlist, unitdict, unitlist):
+def stringparse(parsedunit, sourcestring, doublelist, prefixdict, prefixlist,
+                unitdict, unitlist):
     startpoint = 0
-    while int(startpoint+1)<=len(sourcestring):
+    while int(startpoint+1) <= len(sourcestring):
         print len(parsedunit)+1
         inputstring = sourcestring[startpoint:]
         print 'Remaining string to be parsed is ' + inputstring
         currenttype = 0
         
-        checkflag, key, tempstartpoint = listcheck(prefixlist, startpoint, inputstring)
+        checkflag, key, tempstartpoint = listcheck(prefixlist, startpoint,
+                                                   inputstring)
         if checkflag == False:
             #print 'prefixlistcheck false at ' + str(startpoint)
-            checkflag, key, tempstartpoint = listcheck(unitlist, startpoint, inputstring)
+            checkflag, key, tempstartpoint = listcheck(unitlist, startpoint,
+                                                       inputstring)
             if checkflag == False:
                 print 'No units from either dictionary have been found in the rest of your input string'
             elif checkflag == True:
@@ -100,25 +110,36 @@ def stringparse(parsedunit, sourcestring, doublelist, prefixdict, prefixlist, un
                 startpoint = tempstartpoint
                 printstate(parsedunit,startpoint)
         elif checkflag == True:
-            if key in doublelist:#If this is one of the annoying keys that is both a prefix and a unit, such as milli and meter, check further
+            if key in doublelist: # If this is one of the annoying keys that is
+                                  # both a prefix and a unit, such as milli and
+                                  # meter, check further
                 print 'Checking if detected substring is a prefix or unit, as it represents both.'
                 doublecheckflag, doublekey, doublestartpoint = listcheck(unitlist, tempstartpoint, inputstring[len(key):])
                 print doublecheckflag
-                if doublecheckflag == True:#Pattern is [p/u]->u
-                    if currenttype == 0:#This means this is the first substring
-                        currenttype = 1#It's -probably- a prefix. Pattern locked as p->u
-                        updateparsedunit(parsedunit,key,prefixdict[key],currenttype)
+                if doublecheckflag == True: #Pattern is [p/u]->u
+                    if currenttype == 0: #This means this is the first substring
+                        currenttype = 1 #It's -probably- a prefix. Pattern
+                                        #locked as p->u
+                        updateparsedunit(parsedunit,key,prefixdict[key],
+                                         currenttype)
                         startpoint = tempstartpoint
-                    elif currenttype == 1:#This checks to see if the last time around the update was a prefix. Pattern is p->[p/u]->u
+                    elif currenttype == 1:#This checks to see if the last time
+                                          #around the update was a
+                                          #prefix. Pattern is p->[p/u]->u
                         currenttype = 2 #Pattern confirmed as p->u->u
-                        updateparsedunit(parsedunit,key,unitdict[key],currenttype)
-                        startpoint = tempstartpoint #Instead of updating twice at once, incrementing properly so next eval can be done as well.
-                    elif currenttype == 2:#Pattern is u->[p/u]->u
-                        currenttype = 1#Pattern locked as u->p->u
-                        updateparsedunit(parsedunit,key,prefixdict[key],currenttype)
+                        updateparsedunit(parsedunit,key,unitdict[key],
+                                         currenttype)
+                        startpoint = tempstartpoint #Instead of updating twice
+                                                    #at once, incrementing
+                                                    #properly so next eval can
+                                                    #be done as well.
+                    elif currenttype == 2: #Pattern is u->[p/u]->u
+                        currenttype = 1 #Pattern locked as u->p->u
+                        updateparsedunit(parsedunit,key,prefixdict[key],
+                                         currenttype)
                         startpoint = tempstartpoint
-                elif doublecheckflag == False:#Pattern is [p/u]->p
-                    currenttype = 2#It's absolutely a unit. p->p not allowed.
+                elif doublecheckflag == False: #Pattern is [p/u]->p
+                    currenttype = 2 #It's absolutely a unit. p->p not allowed.
                     updateparsedunit(parsedunit,key,unitdict[key],currenttype)
                     startpoint = tempstartpoint
             else:#Otherwise, update
