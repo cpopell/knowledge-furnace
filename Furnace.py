@@ -1,20 +1,14 @@
+FRACTIONAL_SEPARATORS = ['/', 'per']
+
 def splitsource(sourcestring): #Function splitsource detects if the unit is in
                                #fractional form
-    if '/' in sourcestring: #If the division symbol is present in the string,
-                            #indicating a numerator and denominator
-        sourcestringsplit = sourcestring.split('/') #Split the string in half
-                                                    #along the '/'
-        splitter = '/'
-    elif 'per' in sourcestring.lower(): #Otherwise, if there is a 'per' present
-                                        #in the strong (1 meter per second)
-        sourcestringsplit = sourcestring.split('per') #Split the string in half
-                                                      #along the 'per'
-        splitter = 'per'
-    else: #Otherwise, pass.
-        sourcestringsplit = sourcestring
-        splitter = ''
-    return sourcestringsplit,splitter #Return sourcestringsplit as a list, and
-                                      #the symbol used to split
+    for separator in FRACTIONAL_SEPARATORS:
+        if separator in sourcestring: # If there's a separating symbol in the
+                                      # string, use it to split the string
+            split = sourcestring.split(separator)
+            return split, separator
+    #Otherwise, pass.
+    return sourcestring, ''
 
 def detectprefix(sourcestringsplit): #Function detectPrefix detects the prefixes
     import re
