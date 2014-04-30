@@ -12,18 +12,23 @@ def splitsource(sourcestring): #Function splitsource detects if the unit is in
         sourcestringsplit = sourcestring
     return sourcestringsplit #Return sourcestringsplit as a list
 
-# def detectPrefix(unitstringsplit): #Function detectPrefix detects the prefixes
-#     print ("The passed string is %s") % (unitstringsplit) #TEST: What string was passed?
-#     unitmultiplier = 1 #Default multiplier is 1.
-#     multiplierlist = [] #<>
-#     pattern = re.compile("^((?:\d*\.\d+)|\d+)(?:\^((?:\d*\.\d+)|\d+))?") #Regex
-#     match = pattern.match(unitstringsplit) #Check unitstringsplit for the regex pattern
-#     if match is not None: #If a match is found
-#         num, exp = match.groups() #Number and exponential are two groups
-#         if exp == None: #If there's no exponential
-#             scalarmultiplier = num #The scalar multiplier is just the number
-#         else:#If there is an exponential
-#             scalarmultiplier = num ** exp #The scalar multiplier is the number raised to the exponential, ie 13^2 would be num == 13, exp == 2, scalarmultiplier == 13 ** 2
+def detectprefix(sourcestringsplit): #Function detectPrefix detects the prefixes
+    import re
+    print ("The passed string is %s") % (sourcestringsplit) #TEST: What string was passed?
+    scalarmultiplier = 1 #Default multiplier is 1.
+    startpoint = 0
+    scalarstring = None
+    pattern = re.compile("^((?:\d*\.\d+)|\d+)(?:\^((?:\d*\.\d+)|\d+))?") #Regex
+    match = pattern.match(sourcestringsplit) #Check unitstringsplit for the regex pattern
+    if match is not None: #If a match is found
+        num, exp = match.groups() #Number and exponential are two groups
+        if exp == None: #If there's no exponential
+            scalarmultiplier = num #The scalar multiplier is just the number
+        else:#If there is an exponential
+            scalarmultiplier = int(num) ** int(exp) #The scalar multiplier is the number raised to the exponential, ie 13^2 would be num == 13, exp == 2, scalarmultiplier == 13 ** 2
+            startpoint = len(num) + len(exp) + 1
+            scalarstring = str(num) + '^' + str(exp)
+    return scalarmultiplier, startpoint, scalarstring
 
 def listcheck(list, startpoint, inputstring):
     for key in list:
@@ -69,7 +74,7 @@ def init():
     import re #Regex
     #parsedsubstring = collections.namedtuple('parsedsubstring',['subin','subout','subtype'])
     parsedunit = []
-    sourcestring = 'mmkPa'
+    sourcestring = '13^2mmkPa'
     doublelist = []
     
     prefixdict, prefixlist = dictimport('prefix.txt')
@@ -90,18 +95,19 @@ def init():
 def stringparse(parsedunit, sourcestring, doublelist, prefixdict, prefixlist,
                 unitdict, unitlist):
     startpoint = 0
+    currenttype = 0
+    scalarmultiplier, startpoint, scalarstring = detectprefix(sourcestring)
+    print scalarmultiplier
     while int(startpoint+1) <= len(sourcestring):
         print len(parsedunit)+1
         inputstring = sourcestring[startpoint:]
         print 'Remaining string to be parsed is ' + inputstring
-        currenttype = 0
-        
         checkflag, key, tempstartpoint = listcheck(prefixlist, startpoint,
-                                                   inputstring)
+                                                  inputstring)
         if checkflag == False:
             #print 'prefixlistcheck false at ' + str(startpoint)
             checkflag, key, tempstartpoint = listcheck(unitlist, startpoint,
-                                                       inputstring)
+                                                      inputstring)
             if checkflag == False:
                 print 'No units from either dictionary have been found in the rest of your input string'
             elif checkflag == True:
