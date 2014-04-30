@@ -4,13 +4,17 @@ def splitsource(sourcestring): #Function splitsource detects if the unit is in
                             #indicating a numerator and denominator
         sourcestringsplit = sourcestring.split('/') #Split the string in half
                                                     #along the '/'
+        splitter = '/'
     elif 'per' in sourcestring.lower(): #Otherwise, if there is a 'per' present
                                         #in the strong (1 meter per second)
         sourcestringsplit = sourcestring.split('per') #Split the string in half
                                                       #along the 'per'
+        splitter = 'per'
     else: #Otherwise, pass.
         sourcestringsplit = sourcestring
-    return sourcestringsplit #Return sourcestringsplit as a list
+        splitter = ''
+    return sourcestringsplit,splitter #Return sourcestringsplit as a list, and
+                                      #the symbol used to split
 
 def detectprefix(sourcestringsplit): #Function detectPrefix detects the prefixes
     import re
@@ -41,7 +45,10 @@ def printstate(parsedunit, startpoint):
     print 'The list of sorted substrings is ' + str([x[0] for x in parsedunit])
     print 'The interpretation of sorted substrings is ' + str([x[1] for x in parsedunit])
     print 'The index of types of sorted substrings is ' + str([x[2] for x in parsedunit])
-    print 'The starting point for the next search is ' + str(startpoint)
+    if str(startpoint) == 'Complete':
+        print 'The unit has completed analysis.'
+    else:
+        print 'The starting point for the next search is ' + str(startpoint)
     return
 
 def dictimport(filename):
@@ -74,7 +81,7 @@ def init():
     import re #Regex
     #parsedsubstring = collections.namedtuple('parsedsubstring',['subin','subout','subtype'])
     parsedunit = []
-    sourcestring = '13^2mmkPa'
+    sourcestring = 'mm/mm'
     doublelist = []
     
     prefixdict, prefixlist = dictimport('prefix.txt')
@@ -83,11 +90,19 @@ def init():
         if unit in prefixlist:
             doublelist.append(unit)
     
-    sourcestringsplit = splitsource(sourcestring)
+    sourcestringsplit,splitter = splitsource(sourcestring)
     print sourcestringsplit
     if len(sourcestringsplit) == 2:
         left = sourcestringsplit[0]
+        parsedleft,parsedright=[],[]
+        parsedleft = stringparse(parsedleft,left,doublelist,prefixdict,
+                                 prefixlist,unitdict,unitlist)
         right = sourcestringsplit[1]
+        parsedright = stringparse(parsedright,right,doublelist,prefixdict,
+                                 prefixlist,unitdict,unitlist)
+        updateparsedunit(parsedleft,splitter,'/',0)
+        parsedunit = parsedleft+parsedright
+        printstate(parsedunit,'Complete')
     else:
         parsedunit = stringparse(parsedunit, sourcestring, doublelist,
                                  prefixdict, prefixlist, unitdict, unitlist)
@@ -97,6 +112,7 @@ def stringparse(parsedunit, sourcestring, doublelist, prefixdict, prefixlist,
     startpoint = 0
     currenttype = 0
     scalarmultiplier, startpoint, scalarstring = detectprefix(sourcestring)
+    updateparsedunit(parsedunit,scalarstring,scalarmultiplier,currenttype)
     print scalarmultiplier
     while int(startpoint+1) <= len(sourcestring):
         print len(parsedunit)+1
@@ -129,6 +145,7 @@ def stringparse(parsedunit, sourcestring, doublelist, prefixdict, prefixlist,
                         updateparsedunit(parsedunit,key,prefixdict[key],
                                          currenttype)
                         startpoint = tempstartpoint
+                        printstate(parsedunit,startpoint)
                     elif currenttype == 1:#This checks to see if the last time
                                           #around the update was a
                                           #prefix. Pattern is p->[p/u]->u
@@ -139,15 +156,18 @@ def stringparse(parsedunit, sourcestring, doublelist, prefixdict, prefixlist,
                                                     #at once, incrementing
                                                     #properly so next eval can
                                                     #be done as well.
+                        printstate(parsedunit,startpoint)
                     elif currenttype == 2: #Pattern is u->[p/u]->u
                         currenttype = 1 #Pattern locked as u->p->u
                         updateparsedunit(parsedunit,key,prefixdict[key],
                                          currenttype)
                         startpoint = tempstartpoint
+                        printstate(parsedunit,startpoint)
                 elif doublecheckflag == False: #Pattern is [p/u]->p
                     currenttype = 2 #It's absolutely a unit. p->p not allowed.
                     updateparsedunit(parsedunit,key,unitdict[key],currenttype)
                     startpoint = tempstartpoint
+                    printstate(parsedunit,startpoint)
             else:#Otherwise, update
                 currenttype = 1
                 updateparsedunit(parsedunit,key,prefixdict[key],currenttype)
